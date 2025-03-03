@@ -1,7 +1,6 @@
-import express from "express";
 import mongoose from "mongoose";
 
-const userSchema =new mongoose.Schema({
+const userSchema = new mongoose.Schema({
     name : {
         type: String,
         required : true,
@@ -25,14 +24,13 @@ const userSchema =new mongoose.Schema({
         default : false
     },
     resetPasswordToken : String,
-    resetPasswordTime : Date,
+    resetPasswordTokenExpiredAt : Date,
     verificationToken : String,
-    verificationTime : Date
+    verificationTokenExpiredAt : Date
 },{
     versionKey : false,
     timestamps : true
 })
-
 
 const User = mongoose.model("User", userSchema)
 export {User}

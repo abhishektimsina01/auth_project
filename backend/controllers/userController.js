@@ -1,7 +1,8 @@
-function getReq(req, res){
-    console.log("get request")
-    res.end("the request has been responded")
-}
+import {User} from "../models/userModel.js"
+import bcrypt from "bcryptjs"
+import {generateVerificationCode} from "../utils/generateVerificationCode.js"
+import {generatetokenandResCokkies} from "../utils/generatetokenandResCokkies.js"
+
 
 function loginReq(req,res){
     //token should be signed and sent to the user
@@ -13,19 +14,42 @@ function logoutReq(req,res){
     res.end("logged out")
 }
 
-function signupReq(req,res, next){
+async function signupReq(req,res, next){
     try{
         const {name, password, email} = req.body;
         if(!email || !name || !password){
             const error = new Error("Fill up all the credentials")
-            next(error)
-        }   
-        console.log(name, password, email)
-        res.end("signed up")
+            error.status = 400
+            throw error;
+        }
+        const userAlreadyExist = await User.findOne({name})   
+        if(userAlreadyExist){
+            const error = new Error("The user already exist")
+            error.status = 400
+            throw error;
+        }
+
+        const hashesPassword = await bcrypt.hash(password, 10)
+        const verificationToken = generateVerificationCode()
+        const user = await User.create({
+            name : name,
+            passwrod : hashesPassword,
+            email : email,
+            verificationToken : verificationToken,
+            verificationTimeExpiresAt : new Date.now() + 24*60*60*1000
+        })
+
+        req.user = user
+
+        console.log(generatetokenandResCokkies(res, user))
+
+        res.status(201).json({
+            message : "Signed up",
+        })
     }
     catch(err){
         next(err)
     }
 }
 
-export {getReq, signupReq, loginReq, logoutReq}
+export {signupReq, loginReq, logoutReq}
