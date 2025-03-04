@@ -2,8 +2,7 @@ import {User} from "../models/userModel.js"
 import bcrypt from "bcryptjs"
 import {generateVerificationCode} from "../utils/generateVerificationCode.js"
 import {generateTokenandResCokkies} from "../utils/generatetokenandResCokkies.js"
-import { verificationOfToken } from "../utils/verificationOfToken.js"
-import {sendVerificationEmail} from "../utils/sendVerificationEmail.js"
+import { sendVerificationEmail } from "../mailtrap/emails.js"
 
 async function loginReq(req,res,next){
     //token should be signed and sent to the user
@@ -61,8 +60,10 @@ async function signupReq(req,res, next){
             verificationTimeExpiresAt : new Date().now + 24*60*60*1000
         })
         req.user = user
+
         generateTokenandResCokkies(res, user)
-        sendVerificationEmail(user)
+        sendVerificationEmail(user.email, verificationToken)
+
         res.status(201).json({
             message : "Signed up",
         })
