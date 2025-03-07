@@ -2,8 +2,8 @@ import {User} from "../models/userModel.js"
 import bcrypt from "bcryptjs"
 import {generateVerificationCode} from "../utils/generateVerificationCode.js"
 import {generateTokenandResCokkies} from "../utils/generatetokenandResCokkies.js"
-import { sendVerificationEmail } from "../mailtrap/emails.js"
-
+import { sendVerificationEmail, sendWelcomeEmail} from "../mailtrap/emails.js"
+import {removeResCookie} from "../utils/removeResCookie.js"
 async function loginReq(req,res,next){
     //token should be signed and sent to the user
     try{
@@ -29,10 +29,16 @@ async function loginReq(req,res,next){
     }
 }
 
-function logoutReq(req,res){
+function logoutReq(req,res, next){
     //token should be removed from the user
-
-    res.end("logged out")
+    try{
+        removeResCookie(res,req);
+        res.end("logged out")
+    }
+    catch(err){
+        next(err)
+    }
+    
 }
 
 async function signupReq(req,res, next){
@@ -60,9 +66,8 @@ async function signupReq(req,res, next){
             verificationTimeExpiresAt : new Date().now + 24*60*60*1000
         })
         req.user = user
-
         generateTokenandResCokkies(res, user)
-        sendVerificationEmail(user.email, verificationToken)
+        await sendVerificationEmail(user.email, verificationToken)
 
         res.status(201).json({
             message : "Signed up",
@@ -73,4 +78,27 @@ async function signupReq(req,res, next){
     }
 }
 
-export {signupReq, loginReq, logoutReq}
+const verifyEmail = async (req,res,next) =>{
+    try{
+        const {code} = req.body
+        const user = await User.findOne({
+            verificationToken : code,
+            verificationTokenExpiredAt : {$gt : Date.now()}
+        })
+
+        if(!user){
+            return res.status(400).json({ success : false, message : "Invalid or expired verification code"}) 
+        }
+        user.isVerified = true
+        user.verificationToken = undefined
+        user.verificationTokenExpiredAt = undefined
+        await user.save()
+
+        await sendWelcomeEmail(user.name, user.email)
+    }
+    catch(err){
+        next(err)
+    }
+}
+
+export {signupReq, loginReq, logoutReq , verifyEmail}

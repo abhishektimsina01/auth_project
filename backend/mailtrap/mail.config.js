@@ -9,5 +9,5 @@ export const mailtrapClient = new MailtrapClient({endpoint : ENDPOINT, token: TO
 
 export const sender = {
   email: "hello@demomailtrap.co",
-  name: "Abhishek the great",
+  name: "The CEO, Abhishek",
 };

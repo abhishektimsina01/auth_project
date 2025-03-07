@@ -21,3 +21,25 @@ export const sendVerificationEmail = async(email, verificationToken, next) =>{
         next(err)
     }
 }
+
+
+export  async function sendWelcomeEmail(name, email){
+    const reviever = [
+        {
+            email : "timsinaabhishek1@gmail.com",
+        },
+    ]
+    try{
+        const response = await mailtrapClient.send({
+            from : sender,
+            to : reviever,
+            subject : "Verify your email",
+            text :  `Welcome to the app ${name}, your logged-in email will be ${email}`,
+            category : "Welcome to the app"
+        })
+        console.log(response)
+    }
+    catch(err){
+        next(err)
+    }
+}

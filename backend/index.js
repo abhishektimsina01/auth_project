@@ -4,12 +4,14 @@ import {connectDB} from "./config.js"
 import { user } from "./routes/userRoutes.js"
 import { notFound , errorHandler } from "./middleware/userMiddleware.js"
 import dotenv from "dotenv"
+import cookieParser from "cookie-parser"
 dotenv.config()
 
 const app = express()
 
 connectDB(process.env.MONGO_URI)
 
+app.use(cookieParser())
 app.use(express.json())
 app.use(express.urlencoded({extended : false}))
 
