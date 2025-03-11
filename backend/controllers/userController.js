@@ -4,6 +4,8 @@ import {generateVerificationCode} from "../utils/generateVerificationCode.js"
 import {generateTokenandResCokkies} from "../utils/generatetokenandResCokkies.js"
 import { sendVerificationEmail, sendWelcomeEmail} from "../mailtrap/emails.js"
 import {removeResCookie} from "../utils/removeResCookie.js"
+
+
 async function loginReq(req,res,next){
     //token should be signed and sent to the user
     try{
@@ -55,7 +57,6 @@ async function signupReq(req,res, next){
         }
 
         const hashedPassword = await bcrypt.hash(password, 10)
-
         const verificationToken = generateVerificationCode()
 
         const user = await User.create({
@@ -63,10 +64,9 @@ async function signupReq(req,res, next){
             password : hashedPassword,
             email : email,
             verificationToken : verificationToken,
-            verificationTimeExpiresAt : new Date().now + 24*60*60*1000
+            verificationTokenExpiredAt : Date.now() + 24* 60 * 60* 1000
         })
-        req.user = user
-        generateTokenandResCokkies(res, user)
+        await generateTokenandResCokkies(res, user)
         await sendVerificationEmail(user.email, verificationToken)
 
         res.status(201).json({
@@ -93,8 +93,8 @@ const verifyEmail = async (req,res,next) =>{
         user.verificationToken = undefined
         user.verificationTokenExpiredAt = undefined
         await user.save()
-
         await sendWelcomeEmail(user.name, user.email)
+        res.status(201).json({ success : true, message : "Verified"}) 
     }
     catch(err){
         next(err)
